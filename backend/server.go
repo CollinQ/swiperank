@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/kennedynguyen1/swipe-rank/backend/webhooks"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -50,6 +51,7 @@ func main() {
 	}
 	http.HandleFunc("/count-applicants", countApplicantsHandler(client))
 	http.HandleFunc("/background-check", aiBackgroundCheck())
+	http.HandleFunc("/formResponseListener", webhooks.HandleFormResponse(client))
 	fmt.Println("Successfully connected to MongoDB!")
 	http.ListenAndServe(":8080", nil)
 }
