@@ -9,20 +9,11 @@ export default function Navigation() {
 
   return (
     <header className="py-4 px-6 md:px-10 flex justify-between items-center bg-white shadow-sm">
-      <div className="text-2xl font-bold text-blue-600">SwipeRank</div>
+      <Link href="/home">
+        <div className="text-2xl font-bold text-blue-600 cursor-pointer">SwipeRank</div>    
+      </Link>
       <nav>
         <ul className="flex space-x-4">
-          <li>
-            <Button variant="ghost" asChild>
-              <Link href="#features">Features</Link>
-            </Button>
-          </li>
-          <li>
-            <Button variant="ghost" asChild>
-              <Link href="#how-it-works">How It Works</Link>
-            </Button>
-          </li>
-
           {isSignedIn ? (
             // If logged in, show User Avatar
             <li>
@@ -38,7 +29,7 @@ export default function Navigation() {
               </li>
               <li>
                 <Button variant="default" asChild>
-                  <SignInButton />
+                  <SignUpButton />
                 </Button>
               </li>
             </>

@@ -25,9 +25,11 @@ npm install
 
 ```
 cp backend/.env-template backend/.env
+cp frontend/.env-template frontend/.env
 ```
 
-2. Add the required environment variables: See Discord Server for Documentation
+
+2. Add the required environment variables: See Discord Server for Documentation 
 
 #### 4️⃣ **Start the Development Server**
 
