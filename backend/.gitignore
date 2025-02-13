@@ -1,0 +1,13 @@
+.env
+
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Dependency directories
+vendor/
