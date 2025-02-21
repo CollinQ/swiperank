@@ -41,11 +41,15 @@ const CandidatesPage = () => {
         <Card
           onClick={() => setSelectedId(leftApplicant.id)}
           className={`w-full md:w-96 cursor-pointer transition-shadow border-2 ${
-            selectedId === leftApplicant.id ? "shadow-xl border-blue-500" : "shadow-sm border-gray-200"
+            selectedId === leftApplicant.id
+              ? "shadow-xl border-blue-500"
+              : "shadow-sm border-gray-200"
           }`}
         >
           <CardHeader>
-            <CardTitle className="text-xl font-bold">{leftApplicant.name}</CardTitle>
+            <CardTitle className="text-xl font-bold">
+              {leftApplicant.name}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -63,7 +67,9 @@ const CandidatesPage = () => {
                   <Separator className="my-2" />
                   <div>
                     <p className="font-semibold">Interview Notes</p>
-                    <p className="text-gray-600">{leftApplicant.interviewNotes}</p>
+                    <p className="text-gray-600">
+                      {leftApplicant.interviewNotes}
+                    </p>
                   </div>
                 </>
               )}
@@ -75,11 +81,15 @@ const CandidatesPage = () => {
         <Card
           onClick={() => setSelectedId(rightApplicant.id)}
           className={`w-full md:w-96 cursor-pointer transition-shadow border-2 ${
-            selectedId === rightApplicant.id ? "shadow-xl border-blue-500" : "shadow-sm border-gray-200"
+            selectedId === rightApplicant.id
+              ? "shadow-xl border-blue-500"
+              : "shadow-sm border-gray-200"
           }`}
         >
           <CardHeader>
-            <CardTitle className="text-xl font-bold">{rightApplicant.name}</CardTitle>
+            <CardTitle className="text-xl font-bold">
+              {rightApplicant.name}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -97,7 +107,9 @@ const CandidatesPage = () => {
                   <Separator className="my-2" />
                   <div>
                     <p className="font-semibold">Interview Notes</p>
-                    <p className="text-gray-600">{rightApplicant.interviewNotes}</p>
+                    <p className="text-gray-600">
+                      {rightApplicant.interviewNotes}
+                    </p>
                   </div>
                 </>
               )}
