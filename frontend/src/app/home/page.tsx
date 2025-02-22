@@ -4,30 +4,25 @@ import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
-// Simulated API Call (Replace with Real API)
-async function getProjects() {
-  // Normally, this would fetch from a database or API:
-  // const res = await fetch("https://yourapi.com/projects");
-  // return res.json();
+interface Project {
+  id: number;
+  name: string;
+  totalApplicants: number;
+  completedComparisons: number;
+  totalComparisons: number;
+  progress: number;
+}
 
-  return [
-    {
-      id: 1,
-      name: "Spring 2024 Club Applications",
-      totalApplicants: 50,
-      completedComparisons: 125,
-      totalComparisons: 200,
-      progress: 62.5,
-    },
-    {
-      id: 2,
-      name: "Fall 2023 Executive Board",
-      totalApplicants: 20,
-      completedComparisons: 80,
-      totalComparisons: 100,
-      progress: 80,
-    },
-  ];
+async function getProjects(): Promise<Project[]> {
+  const res = await fetch("http://localhost:3000/api/projects", {
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch projects");
+  }
+
+  return res.json();
 }
 
 export default async function Home() {
