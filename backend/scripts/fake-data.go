@@ -16,7 +16,7 @@ var firstNames = []string{"Alice", "Bob", "Charlie", "David", "Eve", "Frank", "G
 var lastNames = []string{"Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor"}
 
 func main() {
-	clientOptions := options.Client().ApplyURI("mongodb+srv://<username>:<password>@ucsb-akpsi.18g4e.mongodb.net/")
+	clientOptions := options.Client().ApplyURI("pass")
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
 		log.Fatal(err)
