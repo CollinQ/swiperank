@@ -10,7 +10,7 @@ export default function NewProject() {
 
     try {
       // You'll want to replace this with your actual API endpoint
-      const response = await fetch("/api/projects", {
+      const response = await fetch("/api/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

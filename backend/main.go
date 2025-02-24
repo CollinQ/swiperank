@@ -20,9 +20,9 @@ func main() {
 		log.Println("Warning: .env failed to load")
 	}
 
-	mongoURI := os.Getenv("MONGO_URI")
+	mongoURI := os.Getenv("MONGODB_URI")
 	if mongoURI == "" {
-		log.Fatal("No MONGO_URI found in .env")
+		log.Fatal("No MONGODB_URI found in .env")
 	}
 
 	// clerkAPIkey := os.Getenv("CLERK_API_KEY")
@@ -35,8 +35,7 @@ func main() {
 	db.ConnectMongoDB(mongoURI)
 	router := chi.NewRouter()
 	// router.With(middleware.AuthMiddleware).Get("/api/projects", routes.GetProjectsHandler)
-	router.Get("/api/projects", routes.GetProjectsHandler)
-
+	routes.SetupRoutes(router)
 	log.Println("Server started on :8080")
 	http.ListenAndServe(":8080", router)
 }
