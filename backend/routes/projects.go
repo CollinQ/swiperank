@@ -13,6 +13,7 @@ import (
 )
 
 func GetProjectsHandler(w http.ResponseWriter, r *http.Request) {
+	
 	collection := db.GetCollection("projects")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

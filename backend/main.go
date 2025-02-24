@@ -8,6 +8,7 @@ import (
 
 	"backend/db"
 	"backend/routes"
+	// "backend/middleware"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
@@ -24,8 +25,16 @@ func main() {
 		log.Fatal("No MONGO_URI found in .env")
 	}
 
+	// clerkAPIkey := os.Getenv("CLERK_API_KEY")
+	// if clerkAPIkey == "" {
+	// 	log.Fatal("No CLERK_API_KEY found in .env")
+	// }
+
+	// middleware.InitClerk(clerkAPIkey)
+
 	db.ConnectMongoDB(mongoURI)
 	router := chi.NewRouter()
+	// router.With(middleware.AuthMiddleware).Get("/api/projects", routes.GetProjectsHandler)
 	router.Get("/api/projects", routes.GetProjectsHandler)
 
 	log.Println("Server started on :8080")
