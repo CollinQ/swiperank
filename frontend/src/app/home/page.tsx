@@ -5,24 +5,28 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 
 interface Project {
-  id: number;
+  id: string;
   name: string;
   totalApplicants: number;
   completedComparisons: number;
   totalComparisons: number;
-  progress: number;
 }
 
 async function getProjects(): Promise<Project[]> {
-  const res = await fetch("http://localhost:3000/api/projects", {
-    cache: "no-store",
-  });
+  try {
+    const res = await fetch("http://localhost:8080/api/projects", {
+      cache: "no-store",
+    });
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch projects");
+    if (!res.ok) {
+      throw new Error("Failed to fetch projects from backend");
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    return [];
   }
-
-  return res.json();
 }
 
 export default async function Home() {
@@ -48,7 +52,7 @@ export default async function Home() {
                     {project.totalComparisons}
                   </p>
                 </div>
-                <Progress value={project.progress} className="w-full" />
+                <Progress value={project.completedComparisons} className="w-full" />
                 <Button asChild className="w-full">
                   <Link href={`/review/${project.id}`}>Continue Review</Link>
                 </Button>
