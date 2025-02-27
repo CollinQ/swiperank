@@ -10,6 +10,7 @@ require (
 
 require (
 	github.com/clerk/clerk-sdk-go/v2 v2.2.0 // indirect
+	github.com/go-chi/cors v1.2.1 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
