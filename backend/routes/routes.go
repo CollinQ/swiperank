@@ -15,6 +15,8 @@ func SetupRoutes(router chi.Router) {
 		// Project routes
 		r.Get("/projects", projectController.GetAll)
 		// r.Get("/data", dataController.GetAll) // TODO // when clicking "ADD NEW PROJECT" I want this to display all new projects, NOT NECESSARY FOR NOW. FOCUS ON MAKING ONE WORK
+		r.Post("/projects", projectController.Create)
+
 		r.Get("/applicants", applicantController.GetAll) // TODO
 		r.Get("/applicants/{id}", applicantController.GetById)
 
