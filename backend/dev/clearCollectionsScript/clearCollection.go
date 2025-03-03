@@ -1,6 +1,7 @@
 package main
 
-// go run backend/dev/clearCollection.go -collections "applicants,fs.chunks,fs.files"
+// clears applicant and applicant related collections for reset on database
+// go run backend/dev/clearCollectionsScript/clearCollection.go -collections "applicants,fs.chunks,fs.files"
 
 import (
 	"context"
