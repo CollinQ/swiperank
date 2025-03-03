@@ -3,16 +3,19 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"time"
-	"math"
+	"net/url"
 
 	"backend/db"
 	"backend/models"
+
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type ProjectController struct {
@@ -62,11 +65,11 @@ func (pc *ProjectController) Create(w http.ResponseWriter, r *http.Request) {
 
 	project.ID = primitive.NewObjectID()
 	project.CompletedComparisons = 0
+	project.TotalComparisons = 0
+	project.TotalApplicants = 0
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	project.TotalComparisons = calculateSwissTotalComparisons(int(150)) // NEED APPLICATIONS IN MONGODB
 
 	_, err := pc.collection.InsertOne(ctx, project)
 	if err != nil {
@@ -75,9 +78,19 @@ func (pc *ProjectController) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	formLink := fmt.Sprintf("http://localhost:3000/apply?projectId=%s&projectName=%s", 
+	project.ID.Hex(), url.QueryEscape(project.Name))
+
+
+	response := map[string]interface{} {
+		"projectId": project.ID.Hex(),
+		"name":		 project.Name,
+		"link":		 formLink,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(project)
+	json.NewEncoder(w).Encode(response)
 }
 
 func calculateSwissTotalComparisons(numApplicants int) int {
