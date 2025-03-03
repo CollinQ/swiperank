@@ -29,6 +29,7 @@ type FileInfo struct {
 	DriveFileID string  `json:"driveFileId" bson:"driveFileId"`
 	UniqueName  string    `json:"uniqueName" bson:"uniqueName"`
 	UploadedAt  time.Time `json:"uploadedAt" bson:"uploadedAt"`
+	Data        string    `json:"data,omitempty" bson:"-"` 
 }
 
 type FormResponses struct {

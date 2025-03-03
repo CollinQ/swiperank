@@ -1,8 +1,9 @@
 //go:build ignore
 
+package main
+
 // clears applicant and applicant related collections for reset on database
 // go run backend/dev/clearCollectionsScript/clearCollection.go -collections "applicants,fs.chunks,fs.files"
-package main
 
 import (
 	"context"

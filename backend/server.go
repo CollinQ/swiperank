@@ -52,6 +52,7 @@ func main() {
 	http.HandleFunc("/count-applicants", countApplicantsHandler(client))
 	http.HandleFunc("/background-check", aiBackgroundCheck())
 	http.HandleFunc("/formResponseListener", api.HandleFormResponse(client))
+	http.HandleFunc("/least-rated-applicants", api.GetLeastRatedApplicants(client))
 	fmt.Println("Successfully connected to MongoDB!")
 	http.ListenAndServe(":8080", nil)
 }
