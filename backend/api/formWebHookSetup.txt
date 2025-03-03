@@ -6,7 +6,7 @@ Instructions for running server on public address to test form response webhook
 
 3. bash: ngrok config add-authtoken <authtoken>
 
-4. start server locally -> bash: go run server go
+4. start server locally -> bash: go run server.go
 
 5. in a diff terminal bash: ngrok http http://localhost:<port number--default is 8080>
     - different URL each time you run this command

@@ -1,4 +1,4 @@
-package webhooks
+package api
 
 import (
 	"context"
@@ -55,7 +55,6 @@ func HandleFormResponse(client *mongo.Client) http.HandlerFunc {
 			http.Error(w, "Error initializing GridFS: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-
 		for _, resp := range formData.Responses {
 			processedResponse := bson.M{
 				"question": resp.Question,
