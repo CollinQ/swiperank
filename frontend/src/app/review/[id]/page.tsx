@@ -32,7 +32,7 @@ const CandidatesPage = () => {
       try {
         console.log('Starting fetch...');
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        const response = await fetch(`${apiUrl}/least-rated-applicants`, {
+        const response = await fetch(`${apiUrl}/api/least-rated-applicants`, {
           method: 'GET',
           mode: 'cors',
           headers: {

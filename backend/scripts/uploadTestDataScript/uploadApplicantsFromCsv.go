@@ -4,7 +4,7 @@ package main
 
 // uploads airtable csv for applicants to mongo DB for testing
 // cd backend
-// go run dev/uploadTestDataScript/uploadApplicantsFromCsv.go
+// go run scripts/uploadTestDataScript/uploadApplicantsFromCsv.go
 
 import (
 	"bytes"
@@ -19,12 +19,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kennedynguyen1/swipe-rank/backend/types"
+	"backend/models"
 )
 
 func UploadApplicants() {
 	// Open CSV file
-	file, err := os.Open("dev/uploadTestDataScript/Fall 23 Rush App Responses.csv")
+	file, err := os.Open("scripts/uploadTestDataScript/Fall 23 Rush App Responses.csv")
 	if err != nil {
 		fmt.Printf("Error opening CSV file: %v\n", err)
 		return
@@ -55,9 +55,9 @@ func UploadApplicants() {
 		}
 
 		// Create form response
-		formData := types.FormResponses{
+		formData := models.FormResponses{
 			Timestamp: time.Now().Format(time.RFC3339),
-			Responses: []types.Response{
+			Responses: []models.Response{
 				{Question: "firstName", Answer: record[0]},
 				{Question: "lastName", Answer: record[1]},
 				{Question: "year", Answer: record[8]},
@@ -106,7 +106,7 @@ func UploadApplicants() {
 			}
 
 			// Create file response
-			fileResponse := types.Response{
+			fileResponse := models.Response{
 				Question: fileType,
 				Answer: map[string]interface{}{
 					"type":     "file",
@@ -127,7 +127,7 @@ func UploadApplicants() {
 		}
 
 		// Send POST request to endpoint
-		resp, err := http.Post("http://localhost:8080/formResponseListener", "application/json", bytes.NewBuffer(jsonData))
+		resp, err := http.Post("http://localhost:8080/api/formResponseListener", "application/json", bytes.NewBuffer(jsonData))
 		if err != nil {
 			fmt.Printf("Error sending request: %v\n", err)
 			continue
