@@ -1,3 +1,5 @@
+//go:build ignore
+
 // uploads airtable csv for applicants to mongo DB for testing
 // cd backend
 // go run dev/uploadTestDataScript/uploadApplicantsFromCsv.go
