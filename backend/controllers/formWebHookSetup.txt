@@ -1,0 +1,18 @@
+Instructions for running server on public address to test form response webhook
+
+1. bash: brew install ngrok
+
+2. sign up for ngrok: https://dashboard.ngrok.com/get-started/setup/macos
+
+3. bash: ngrok config add-authtoken <authtoken>
+
+4. start server locally -> bash: go run server.go
+
+5. in a diff terminal bash: ngrok http http://localhost:<port number--default is 8080>
+    - different URL each time you run this command
+
+6. Google Apps Script: Set SERVER_URL as <ngrok serverUrl> into google apps script
+    - link to form: https://docs.google.com/forms/d/e/1FAIpQLSdag3S-DEvjX-XcT4xfrFqXV_Ve0Q3B_h6o0tlW1kzB2PRacA/viewform?usp=sharing
+    - to access script: three dots in top right
+
+7. Submit a form and DB should update

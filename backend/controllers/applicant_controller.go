@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -14,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/gridfs"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -189,5 +192,78 @@ func (ac *ApplicantController) UpdateElo(w http.ResponseWriter, r *http.Request)
 	}	
 
     w.WriteHeader(http.StatusOK)
+}
+
+func (ac *ApplicantController) GetLeastRatedApplicants(w http.ResponseWriter, r *http.Request) {
+	// Only allow GET method
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Set up the context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// sort by ascending rating count and get first two applicants
+	opts := options.Find().
+		SetSort(bson.D{{Key: "ratingCount", Value: 1}}).
+		SetLimit(2)
+
+	// Execute the query
+	cursor, err := ac.collection.Find(ctx, bson.D{}, opts)
+	if err != nil {
+		http.Error(w, "Error finding applicants: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer cursor.Close(ctx)
+
+	// Decode the results
+	var applicants []models.Applicant
+	if err = cursor.All(ctx, &applicants); err != nil {
+		http.Error(w, "Error decoding applicants: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Create GridFS bucket
+	bucket, err := gridfs.NewBucket(db.Client.Database("akpsi-ucsb"))
+	if err != nil {
+		http.Error(w, "Error creating GridFS bucket: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Fetch files for each applicant
+	for i, applicant := range applicants {
+		applicants[i].Image = fetchFile(bucket, applicant.Image)
+		applicants[i].CoverLetter = fetchFile(bucket, applicant.CoverLetter)
+		applicants[i].Resume = fetchFile(bucket, applicant.Resume)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data": map[string]interface{}{
+			"applicants": applicants,
+		},
+	})
+}
+
+// Helper function for file fetching
+func fetchFile(bucket *gridfs.Bucket, fileInfo *models.FileInfo) *models.FileInfo {
+	if fileInfo != nil {
+		fileID, err := primitive.ObjectIDFromHex(fileInfo.FileID)
+		if err != nil {
+			return nil
+		}
+
+		var buf bytes.Buffer
+		_, err = bucket.DownloadToStream(fileID, &buf)
+		if err != nil {
+			return nil
+		}
+
+		fileInfo.Data = base64.StdEncoding.EncodeToString(buf.Bytes())
+	}
+	return fileInfo
 }
 

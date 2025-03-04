@@ -3,14 +3,14 @@ module backend
 go 1.23.6
 
 require (
+	github.com/clerk/clerk-sdk-go/v2 v2.2.0
 	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-chi/cors v1.2.1
 	github.com/joho/godotenv v1.5.1
 	go.mongodb.org/mongo-driver v1.17.2
 )
 
 require (
-	github.com/clerk/clerk-sdk-go/v2 v2.2.0 // indirect
-	github.com/go-chi/cors v1.2.1 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
