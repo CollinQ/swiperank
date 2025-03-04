@@ -32,17 +32,27 @@ func (fc *FormResponseController) HandleFormResponse(w http.ResponseWriter, r *h
 		return
 	}
 
-	var formData models.FormResponses
-	if err := json.NewDecoder(r.Body).Decode(&formData); err != nil {
+	var requestData struct {
+		FormId string              `json:"formId"`
+		models.FormResponses
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
 		http.Error(w, "Error parsing request body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	projectID, err := primitive.ObjectIDFromHex(requestData.FormId)
+	if err != nil {
+		projectID = primitive.NewObjectID()
+	}
+
 	applicant := models.Applicant{
-		ID:          primitive.NewObjectID(),
-		Rating:      0,
+		ID:        primitive.NewObjectID(),
+		ProjectID: projectID,
+		Rating:    0,
 		RatingCount: 0,
-		Timestamp:   formData.Timestamp,
+		Timestamp: requestData.Timestamp,
 	}
 
 	bucket, err := gridfs.NewBucket(db.Client.Database("akpsi-ucsb"))
@@ -51,15 +61,13 @@ func (fc *FormResponseController) HandleFormResponse(w http.ResponseWriter, r *h
 		return
 	}
 
-	// Process form responses
-	for _, resp := range formData.Responses {
+	for _, resp := range requestData.Responses {
 		if err := processFormResponse(&applicant, resp, bucket); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 	}
 
-	// Insert the document
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -76,7 +84,6 @@ func (fc *FormResponseController) HandleFormResponse(w http.ResponseWriter, r *h
 		"id":     result.InsertedID,
 	})
 
-	// Pretty print the application details
 	prettyJSON, _ := json.MarshalIndent(applicant, "", "    ")
 	fmt.Printf("Application Received:\n%s\n", string(prettyJSON))
 }
