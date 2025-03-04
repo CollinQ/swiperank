@@ -22,6 +22,8 @@ import (
 	"backend/models"
 )
 
+const formId = "67c66785b4db64228e988097"
+
 func UploadApplicants() {
 	// Open CSV file
 	file, err := os.Open("scripts/uploadTestDataScript/Fall 23 Rush App Responses.csv")
@@ -54,14 +56,34 @@ func UploadApplicants() {
 			continue
 		}
 
+		// Safely access record fields with bounds checking
+		firstName := ""
+		lastName := ""
+		year := ""
+		major := ""
+
+		if len(record) > 0 {
+			firstName = record[0]
+		}
+		if len(record) > 1 {
+			lastName = record[1]
+		}
+		if len(record) > 2 {
+			year = record[2]
+		}
+		if len(record) > 3 {
+			major = record[3]
+		}
+
 		// Create form response
 		formData := models.FormResponses{
+			FormID:     formId,
 			Timestamp: time.Now().Format(time.RFC3339),
 			Responses: []models.Response{
-				{Question: "firstName", Answer: record[0]},
-				{Question: "lastName", Answer: record[1]},
-				{Question: "year", Answer: record[8]},
-				{Question: "major", Answer: record[10]},
+				{Question: "firstName", Answer: firstName},
+				{Question: "lastName", Answer: lastName},
+				{Question: "year", Answer: year},
+				{Question: "major", Answer: major},
 			},
 		}
 
@@ -141,7 +163,7 @@ func UploadApplicants() {
 			continue
 		}
 
-		fmt.Printf("Successfully uploaded application for %s %s\n", record[0], record[1])
+		fmt.Printf("Successfully uploaded application for %s %s\n", firstName, lastName)
 	}
 }
 

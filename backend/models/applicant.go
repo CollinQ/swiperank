@@ -36,6 +36,7 @@ type FileInfo struct {
 }
 
 type FormResponses struct {
+	FormID    string     `json:"formId"`
 	Timestamp string     `json:"submission_timestamp"`
 	Responses []Response `json:"responses"`
 }
