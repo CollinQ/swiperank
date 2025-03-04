@@ -46,7 +46,8 @@ func (pc *ProjectController) GetAll(w http.ResponseWriter, r *http.Request) {
 		log.Println("Cursor decode error:", err)
 		return
 	}
-
+	// Print success message if projects were retrieved
+	log.Println("Successfully retrieved", len(projects), "projects")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(projects)
 }

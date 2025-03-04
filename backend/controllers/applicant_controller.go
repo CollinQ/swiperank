@@ -15,6 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
 )
 
 type ApplicantController struct {
@@ -53,7 +54,7 @@ func resetMatchHistory(ctx context.Context, collection *mongo.Collection) {
 func (ac *ApplicantController) GetAll(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
+	log.Println("Fetching all applicants")
 	cursor, err := ac.collection.Find(ctx, bson.M{})
 	if err != nil {
 		http.Error(w, "Failed to fetch applicants", http.StatusInternalServerError)
@@ -74,7 +75,42 @@ func (ac *ApplicantController) GetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ac *ApplicantController) GetById(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement getting single applicant by ID
+	// log.Println("Fetching applicant by ID")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Get ID from URL path parameter
+	applicantIDStr := r.URL.Query().Get("id")
+	// log.Println("Applicant ID from path:", applicantIDStr)
+
+	if applicantIDStr == "" {
+		http.Error(w, "Applicant ID required", http.StatusBadRequest)
+		return
+	}
+
+	applicantID, err := primitive.ObjectIDFromHex(applicantIDStr)
+	if err != nil {
+		// log.Println("Error converting applicant ID to ObjectID:", err)
+		http.Error(w, "Invalid Applicant ID", http.StatusBadRequest)
+		return
+	}
+
+	var applicant models.Applicant
+	err = ac.collection.FindOne(ctx, bson.M{"_id": applicantID}).Decode(&applicant)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			// log.Println("Applicant not found in database")
+			http.Error(w, "Applicant not found", http.StatusNotFound)
+			return
+		}
+		// log.Println("Failed to fetch applicant from database:", err)
+		http.Error(w, "Failed to fetch applicant", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(applicant)
+	// log.Println("Applicant fetched successfully")
 }
 
 func (ac *ApplicantController) Create(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +124,7 @@ func (ac *ApplicantController) Update(w http.ResponseWriter, r *http.Request) {
 func (ac *ApplicantController) GetTwoForComparison(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
+	
 	projectIDStr := r.URL.Query().Get("project_id")
 	if projectIDStr == "" {
 		http.Error(w, "Project ID required", http.StatusBadRequest)
@@ -100,9 +136,10 @@ func (ac *ApplicantController) GetTwoForComparison(w http.ResponseWriter, r *htt
 		http.Error(w, "Invalid Project ID", http.StatusBadRequest)
 		return
 	}
-
+	log.Printf("Fetching applicants for project ID: %s", projectID.Hex())
 	opts := options.Find().SetSort(bson.D{{Key: "elo", Value: -1}})
 	cursor, err := ac.collection.Find(ctx, bson.M{"project_id": projectID}, opts)
+	log.Printf("Cursor: %v", cursor)
 	if err != nil {
 		http.Error(w, "Failed to fetch applicants", http.StatusInternalServerError)
 		log.Println("MongoDB Find applicants error:", err)
@@ -141,8 +178,10 @@ func (ac *ApplicantController) GetTwoForComparison(w http.ResponseWriter, r *htt
 
 	if applicant1.ID.IsZero() || applicant2.ID.IsZero() {
 		resetMatchHistory(ctx, ac.collection)
+		w.WriteHeader(http.StatusConflict)
 		http.Error(w, "All applicants have already played, match history reset", http.StatusConflict)
-		return
+		
+		return 
 	}
 
 	applicant1.MatchesPlayed = append(applicant1.MatchesPlayed, applicant2.ID)
@@ -201,5 +240,41 @@ func (ac *ApplicantController) UpdateElo(w http.ResponseWriter, r *http.Request)
 	}	
 
     w.WriteHeader(http.StatusOK)
+}
+
+func (ac *ApplicantController) GetRankings(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	
+	projectIDStr := r.URL.Query().Get("project_id")
+	if projectIDStr == "" {
+		http.Error(w, "Project ID required", http.StatusBadRequest)
+		return
+	}
+
+	projectID, err := primitive.ObjectIDFromHex(projectIDStr)
+	if err != nil {
+		http.Error(w, "Invalid Project ID", http.StatusBadRequest)
+		return
+	}
+
+	log.Println("Project ID: ", projectID)
+	// Find all applicants for this project, sorted by Elo
+	opts := options.Find().SetSort(bson.D{{Key: "elo", Value: -1}})
+	cursor, err := ac.collection.Find(ctx, bson.M{"project_id": projectID}, opts)
+	if err != nil {
+		http.Error(w, "Failed to fetch rankings", http.StatusInternalServerError)
+		return
+	}
+	defer cursor.Close(ctx)
+
+	var rankings []models.Applicant
+	if err = cursor.All(ctx, &rankings); err != nil {
+		http.Error(w, "Error decoding rankings", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(rankings)
 }
 
