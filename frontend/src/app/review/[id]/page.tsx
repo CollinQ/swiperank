@@ -12,8 +12,9 @@ interface FileInfo {
 }
 
 interface Applicant {
-  id: string;
-  name: string;
+  _id: string;
+  first_name: string;
+  last_name: string;
   year: string;
   major: string;
   resume: FileInfo | null;
@@ -36,8 +37,7 @@ const CandidatesPage = () => {
     try {
       console.log("Starting fetch...");
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      console.log(apiUrl);
-      const response = await fetch(`${apiUrl}/api/least-rated-applicants`, {
+      const response = await fetch(`${apiUrl}/api/getTwoForComparison`, {
         method: "GET",
         mode: "cors",
         headers: {
@@ -45,7 +45,6 @@ const CandidatesPage = () => {
         },
       });
 
-      console.log("Content-Type:", response.headers.get("content-type"));
       if (response.status === 409) {
         router.push(`/results/${projectId}`);
         return;
@@ -71,6 +70,8 @@ const CandidatesPage = () => {
   }, [projectId]);
 
   const handleCardSelect = async (winnerId: string, loserId: string) => {
+    console.log(winnerId);
+    console.log(loserId);
     try {
       // Update Elo ratings
       const response = await fetch("http://localhost:8080/api/updateElo", {
@@ -150,103 +151,197 @@ const CandidatesPage = () => {
   return (
     <div className="flex flex-col items-center justify-center p-4 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row gap-4">
-        {[leftApplicant, rightApplicant].map((applicant, index) => (
-          <div key={`applicant-${applicant.id}-${index}`}>
-            <Card
-              onClick={() =>
-                handleCardSelect(applicant.id, applicants[1 - index].id)
-              }
-              className={`w-full md:w-96 cursor-pointer transition-shadow border-2 ${
-                selectedId === applicant.id
-                  ? "shadow-xl border-blue-500"
-                  : "shadow-sm border-gray-200"
-              }`}
-            >
-              <CardHeader>
-                <CardTitle className="text-xl font-bold">
-                  {applicant.name}
-                </CardTitle>
-                <div className="text-sm text-gray-600">
-                  {applicant.year} • {applicant.major}
-                </div>
-                <div className="text-sm text-gray-600 mt-1">
-                  Rating: {applicant.rating?.toFixed(1) || "N/A"} (
-                  {applicant.ratingCount} reviews)
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {applicant.image && (
-                    <div>
-                      <img
-                        src={`data:${applicant.image.fileType};base64,${applicant.image.data}`}
-                        alt={applicant.name}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
+        <div>
+          <Card
+            onClick={() => {
+              handleCardSelect(leftApplicant._id, rightApplicant._id);
+            }}
+            className={`w-full md:w-96 cursor-pointer transition-shadow border-2 ${
+              selectedId === leftApplicant._id
+                ? "shadow-xl border-blue-500"
+                : "shadow-sm border-gray-200"
+            }`}
+          >
+            <CardHeader>
+              <CardTitle className="text-xl font-bold">
+                {leftApplicant.first_name} {leftApplicant.last_name}
+              </CardTitle>
+              <div className="text-sm text-gray-600">
+                {leftApplicant.year} • {leftApplicant.major}
+              </div>
+              <div className="text-sm text-gray-600 mt-1">
+                Rating: {leftApplicant.rating?.toFixed(1) || "N/A"} (
+                {leftApplicant.ratingCount} reviews)
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {leftApplicant.image && (
+                  <div>
+                    <img
+                      src={`data:${leftApplicant.image.fileType};base64,${leftApplicant.image.data}`}
+                      alt={leftApplicant.name}
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
+                <div>
+                  <p className="font-semibold">Resume</p>
+                  {leftApplicant.resume ? (
+                    <div className="space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFileClick(leftApplicant.resume, true);
+                        }}
+                        className="text-blue-500 hover:underline"
+                      >
+                        View Resume
+                      </button>
+                      <span>•</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFileClick(leftApplicant.resume);
+                        }}
+                        className="text-blue-500 hover:underline"
+                      >
+                        Download
+                      </button>
                     </div>
+                  ) : (
+                    <p className="text-gray-600">No resume available</p>
                   )}
-                  <div>
-                    <p className="font-semibold">Resume</p>
-                    {applicant.resume ? (
-                      <div className="space-x-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleFileClick(applicant.resume, true);
-                          }}
-                          className="text-blue-500 hover:underline"
-                        >
-                          View Resume
-                        </button>
-                        <span>•</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleFileClick(applicant.resume);
-                          }}
-                          className="text-blue-500 hover:underline"
-                        >
-                          Download
-                        </button>
-                      </div>
-                    ) : (
-                      <p className="text-gray-600">No resume available</p>
-                    )}
-                  </div>
-                  <Separator className="my-2" />
-                  <div>
-                    <p className="font-semibold">Cover Letter</p>
-                    {applicant.coverLetter ? (
-                      <div className="space-x-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleFileClick(applicant.coverLetter, true);
-                          }}
-                          className="text-blue-500 hover:underline"
-                        >
-                          View Cover Letter
-                        </button>
-                        <span>•</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleFileClick(applicant.coverLetter);
-                          }}
-                          className="text-blue-500 hover:underline"
-                        >
-                          Download
-                        </button>
-                      </div>
-                    ) : (
-                      <p className="text-gray-600">No cover letter available</p>
-                    )}
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        ))}
+                <Separator className="my-2" />
+                <div>
+                  <p className="font-semibold">Cover Letter</p>
+                  {leftApplicant.coverLetter ? (
+                    <div className="space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFileClick(leftApplicant.coverLetter, true);
+                        }}
+                        className="text-blue-500 hover:underline"
+                      >
+                        View Cover Letter
+                      </button>
+                      <span>•</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFileClick(leftApplicant.coverLetter);
+                        }}
+                        className="text-blue-500 hover:underline"
+                      >
+                        Download
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">No cover letter available</p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div>
+          <Card
+            onClick={() =>
+              handleCardSelect(rightApplicant._id, leftApplicant._id)
+            }
+            className={`w-full md:w-96 cursor-pointer transition-shadow border-2 ${
+              selectedId === rightApplicant._id
+                ? "shadow-xl border-blue-500"
+                : "shadow-sm border-gray-200"
+            }`}
+          >
+            <CardHeader>
+              <CardTitle className="text-xl font-bold">
+                {rightApplicant.first_name} {rightApplicant.last_name}
+              </CardTitle>
+              <div className="text-sm text-gray-600">
+                {rightApplicant.year} • {rightApplicant.major}
+              </div>
+              <div className="text-sm text-gray-600 mt-1">
+                Rating: {rightApplicant.rating?.toFixed(1) || "N/A"} (
+                {rightApplicant.ratingCount} reviews)
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {rightApplicant.image && (
+                  <div>
+                    <img
+                      src={`data:${rightApplicant.image.fileType};base64,${rightApplicant.image.data}`}
+                      alt={rightApplicant.first_name}
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
+                <div>
+                  <p className="font-semibold">Resume</p>
+                  {rightApplicant.resume ? (
+                    <div className="space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFileClick(rightApplicant.resume, true);
+                        }}
+                        className="text-blue-500 hover:underline"
+                      >
+                        View Resume
+                      </button>
+                      <span>•</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFileClick(rightApplicant.resume);
+                        }}
+                        className="text-blue-500 hover:underline"
+                      >
+                        Download
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">No resume available</p>
+                  )}
+                </div>
+                <Separator className="my-2" />
+                <div>
+                  <p className="font-semibold">Cover Letter</p>
+                  {rightApplicant.coverLetter ? (
+                    <div className="space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFileClick(rightApplicant.coverLetter, true);
+                        }}
+                        className="text-blue-500 hover:underline"
+                      >
+                        View Cover Letter
+                      </button>
+                      <span>•</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFileClick(rightApplicant.coverLetter);
+                        }}
+                        className="text-blue-500 hover:underline"
+                      >
+                        Download
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">No cover letter available</p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

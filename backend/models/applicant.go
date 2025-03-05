@@ -19,6 +19,7 @@ type Applicant struct {
 	Wins          int                 `json:"wins" bson:"wins"`
 	Losses        int                 `json:"losses" bson:"losses"`
 	Elo           int                 `json:"elo" bson:"elo"`
+	ResumeID    primitive.ObjectID `bson:"resume_id" json:"resume_id"`
 	MatchesPlayed []primitive.ObjectID `json:"matches_played" bson:"matches_played"`
 	Resume        *FileInfo           `json:"resume,omitempty" bson:"resume,omitempty"`
 	CoverLetter   *FileInfo           `json:"coverLetter,omitempty" bson:"coverLetter,omitempty"`

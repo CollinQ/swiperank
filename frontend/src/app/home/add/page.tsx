@@ -3,26 +3,31 @@
 import { useState } from "react";
 
 export default function NewProject() {
+  const [name, setName] = useState<string>("");
   const [totalApplicants, setTotalApplicants] = useState<number>(0);
+  const [formLink, setFormLink] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       // You'll want to replace this with your actual API endpoint
-      const response = await fetch("/api/add", {
+      const response = await fetch("http://localhost:8080/api/projects", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ totalApplicants }),
+        body: JSON.stringify({ name, totalApplicants }),
       });
 
       if (!response.ok) {
         throw new Error("Failed to create project");
       }
+      const data = await response.json();
+      setFormLink(data.link);
 
       // Clear form after successful submission
+      setName("");
       setTotalApplicants(0);
       alert("Project created successfully!");
     } catch (error) {
@@ -38,18 +43,17 @@ export default function NewProject() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label
-            htmlFor="totalApplicants"
+            htmlFor="name"
             className="block text-sm font-medium text-gray-700"
           >
-            Total Applicants
+            Project Name
           </label>
           <input
-            type="number"
-            id="totalApplicants"
-            value={totalApplicants}
-            onChange={(e) => setTotalApplicants(parseInt(e.target.value) || 0)}
+            type="text"
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            min="0"
             required
           />
         </div>
@@ -61,6 +65,21 @@ export default function NewProject() {
           Create Project
         </button>
       </form>
+      {formLink && (
+        <div className="mt-4 p-4 bg-gray-50 rounded-md">
+          <p className="font-medium">
+            Application form has been created! Share the following link with applicants:
+          </p>
+          <a
+            href={formLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo-600 underline break-words"
+          >
+            {formLink}
+          </a>
+        </div>
+      )}
     </div>
   );
 }
