@@ -1,14 +1,14 @@
 package main
 
 import (
-    "context"
-    "log"
-    "time"
+	"context"
+	"log"
+	"time"
 
-    "backend/db"
-    "go.mongodb.org/mongo-driver/bson/primitive"
+	"backend/db"
+
 	"go.mongodb.org/mongo-driver/bson"
-
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func updater() {

@@ -12,8 +12,6 @@ type Applicant struct {
 	LastName      string              `json:"lastName" bson:"lastName"`
 	Major         string              `json:"major" bson:"major"`
 	Year          string              `json:"year" bson:"year"`
-	Rating        float64             `json:"rating" bson:"rating"`
-	RatingCount   int                 `json:"ratingCount" bson:"ratingCount"`
 	Timestamp     string              `json:"timestamp" bson:"timestamp"`
 	ProjectID     primitive.ObjectID   `json:"project_id" bson:"project_id"`
 	Wins          int                 `json:"wins" bson:"wins"`
