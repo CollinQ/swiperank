@@ -127,8 +127,20 @@ func (ac *ApplicantController) GetTwoForComparison(w http.ResponseWriter, r *htt
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	projectIDStr := r.URL.Query().Get("project_id")
+	if projectIDStr == "" {
+		http.Error(w, "Project ID required", http.StatusBadRequest)
+		return
+	}
+
+	projectID, err := primitive.ObjectIDFromHex(projectIDStr)
+	if err != nil {
+		http.Error(w, "Invalid Project ID", http.StatusBadRequest)
+		return
+	}
+	
 	opts := options.Find().SetSort(bson.D{{Key: "elo", Value: -1}})
-	cursor, err := ac.collection.Find(ctx, bson.M{}, opts)
+	cursor, err := ac.collection.Find(ctx, bson.M{"project_id": projectID}, opts)
 	if err != nil {
 		http.Error(w, "Failed to fetch applicants", http.StatusInternalServerError)
 		log.Println("MongoDB Find applicants error:", err)
@@ -150,7 +162,7 @@ func (ac *ApplicantController) GetTwoForComparison(w http.ResponseWriter, r *htt
 
 	var applicant1, applicant2 models.Applicant
 	minEloDiff := int(^uint(0) >> 1)
-	for i := 0; i < len(applicants) - 1; i++ {
+	for i := range len(applicants) - 1 {
 		for j := i + 1; j < len(applicants); j++ {
 			if contains(applicants[i].MatchesPlayed, applicants[j].ID) {
 				continue
@@ -213,7 +225,8 @@ func (ac *ApplicantController) UpdateElo(w http.ResponseWriter, r *http.Request)
 
 	winner.Wins += 1
 	loser.Losses += 1
-
+	log.Println(winner.Elo)
+	log.Println(loser.Elo)
 	updateWinner := bson.M{"$set": bson.M{"elo": winner.Elo}, "$inc": bson.M{"wins": 1}}
 	updateLoser := bson.M{"$set": bson.M{"elo": loser.Elo}, "$inc": bson.M{"losses": 1}}
 	

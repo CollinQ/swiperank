@@ -13,7 +13,8 @@ interface FileInfo {
 
 interface Applicant {
   _id: string;
-  name: string;
+  first_name: string;
+  last_name: string;
   year: string;
   major: string;
   resume: FileInfo | null;
@@ -36,7 +37,7 @@ const CandidatesPage = () => {
     try {
       console.log("Starting fetch...");
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      const response = await fetch(`${apiUrl}/api/least-rated-applicants`, {
+      const response = await fetch(`${apiUrl}/api/getTwoForComparison`, {
         method: "GET",
         mode: "cors",
         headers: {
@@ -153,7 +154,6 @@ const CandidatesPage = () => {
         <div>
           <Card
             onClick={() => {
-              
               handleCardSelect(leftApplicant._id, rightApplicant._id);
             }}
             className={`w-full md:w-96 cursor-pointer transition-shadow border-2 ${
@@ -164,7 +164,7 @@ const CandidatesPage = () => {
           >
             <CardHeader>
               <CardTitle className="text-xl font-bold">
-                {leftApplicant.name}
+                {leftApplicant.first_name} {leftApplicant.last_name}
               </CardTitle>
               <div className="text-sm text-gray-600">
                 {leftApplicant.year} • {leftApplicant.major}
@@ -260,7 +260,7 @@ const CandidatesPage = () => {
           >
             <CardHeader>
               <CardTitle className="text-xl font-bold">
-                {rightApplicant.name}
+                {rightApplicant.first_name} {rightApplicant.last_name}
               </CardTitle>
               <div className="text-sm text-gray-600">
                 {rightApplicant.year} • {rightApplicant.major}
@@ -276,7 +276,7 @@ const CandidatesPage = () => {
                   <div>
                     <img
                       src={`data:${rightApplicant.image.fileType};base64,${rightApplicant.image.data}`}
-                      alt={rightApplicant.name}
+                      alt={rightApplicant.first_name}
                       className="w-full h-48 object-cover rounded-lg"
                     />
                   </div>
