@@ -1,5 +1,5 @@
 "use client";
-
+import { useParams, useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -24,52 +24,91 @@ interface Applicant {
 }
 
 const CandidatesPage = () => {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const router = useRouter();
+  const params = useParams();
+  const projectId = params?.id as string;
+
   const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchApplicants = async () => {
+    try {
+      console.log("Starting fetch...");
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+      console.log(apiUrl);
+      const response = await fetch(`${apiUrl}/api/least-rated-applicants`, {
+        method: "GET",
+        mode: "cors",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      console.log("Content-Type:", response.headers.get("content-type"));
+      if (response.status === 409) {
+        router.push(`/results/${projectId}`);
+        return;
+      }
+      if (!response.ok) {
+        throw new Error("Failed to fetch applicants");
+      }
+
+      const data: Applicant[] = await response.json();
+
+      setApplicants(data);
+      setError(null);
+    } catch (err: any) {
+      console.error("Error fetching applicants:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchApplicants = async () => {
-      try {
-        console.log('Starting fetch...');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        const response = await fetch(`${apiUrl}/api/least-rated-applicants`, {
-          method: 'GET',
-          mode: 'cors',
-          headers: {
-            'Accept': 'application/json'
-          }
-        });
-        console.log('Status:', response.status);
-        console.log('Content-Type:', response.headers.get('content-type'));
-        
-        if (!response.ok) {
-          const text = await response.text();
-          console.error('Error response:', text.substring(0, 200) + '...');
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        
-        setApplicants(result.data.applicants || []);
-      } catch (error) {
-        console.error('Fetch error details:', error);
-        setApplicants([]);
-      }
-    };
     fetchApplicants();
-  }, []);
+  }, [projectId]);
 
-  const handleFileClick = (fileInfo: FileInfo | null, preview: boolean = false) => {
+  const handleCardSelect = async (winnerId: string, loserId: string) => {
+    try {
+      // Update Elo ratings
+      const response = await fetch("http://localhost:8080/api/updateElo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          winner_id: winnerId,
+          loser_id: loserId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update Elo ratings");
+      }
+
+      // Fetch next pair of applicants
+      await fetchApplicants();
+    } catch (err: any) {
+      console.error("Error updating Elo:", err);
+      setError(err.message);
+    }
+  };
+
+  const handleFileClick = (
+    fileInfo: FileInfo | null,
+    preview: boolean = false
+  ) => {
     if (!fileInfo?.data) return;
-    
-    
+
     if (preview) {
       try {
         // Create data URL directly for PDF preview
         const dataUrl = `data:application/pdf;base64,${fileInfo.data}`;
-        
+
         // Open PDF in new window/tab
-        const newWindow = window.open('', '_blank');
+        const newWindow = window.open("", "_blank");
         if (newWindow) {
           newWindow.document.write(`
             <html>
@@ -88,12 +127,12 @@ const CandidatesPage = () => {
           `);
         }
       } catch (error) {
-        console.error('Error processing PDF:', error);
-        alert('Error opening PDF. Please try downloading instead.');
+        console.error("Error processing PDF:", error);
+        alert("Error opening PDF. Please try downloading instead.");
       }
     } else {
       // Original download functionality
-      const linkElement = document.createElement('a');
+      const linkElement = document.createElement("a");
       linkElement.href = `data:${fileInfo.fileType};base64,${fileInfo.data}`;
       linkElement.download = fileInfo.fileName;
       document.body.appendChild(linkElement);
@@ -101,9 +140,9 @@ const CandidatesPage = () => {
       document.body.removeChild(linkElement);
     }
   };
-
+  console.log(applicants);
   const [leftApplicant, rightApplicant] = applicants;
-
+  const [selectedId, setSelectedId] = useState();
   if (!leftApplicant || !rightApplicant) {
     return <div>Loading...</div>;
   }
@@ -114,7 +153,9 @@ const CandidatesPage = () => {
         {[leftApplicant, rightApplicant].map((applicant, index) => (
           <div key={`applicant-${applicant.id}-${index}`}>
             <Card
-              onClick={() => setSelectedId(applicant.id)}
+              onClick={() =>
+                handleCardSelect(applicant.id, applicants[1 - index].id)
+              }
               className={`w-full md:w-96 cursor-pointer transition-shadow border-2 ${
                 selectedId === applicant.id
                   ? "shadow-xl border-blue-500"
@@ -129,7 +170,8 @@ const CandidatesPage = () => {
                   {applicant.year} • {applicant.major}
                 </div>
                 <div className="text-sm text-gray-600 mt-1">
-                  Rating: {applicant.rating?.toFixed(1) || 'N/A'} ({applicant.ratingCount} reviews)
+                  Rating: {applicant.rating?.toFixed(1) || "N/A"} (
+                  {applicant.ratingCount} reviews)
                 </div>
               </CardHeader>
               <CardContent>
