@@ -49,7 +49,6 @@ func SetupRoutes(router chi.Router) {
 		// Additional routes from server.go
 		r.Get("/background-check", aiBackgroundCheck())
 		r.Post("/formResponseListener", formResponseController.HandleFormResponse)
-		r.Get("/least-rated-applicants", applicantController.GetLeastRatedApplicants)
 	})
 }
 

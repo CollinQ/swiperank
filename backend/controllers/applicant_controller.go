@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -171,6 +172,22 @@ func (ac *ApplicantController) GetTwoForComparison(w http.ResponseWriter, r *htt
 		return
 	}
 
+	// Append file data to Applicant response
+	bucket, err := gridfs.NewBucket(db.Client.Database("akpsi-ucsb"))
+	if err != nil {
+		http.Error(w, "Error creating GridFS bucket: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	applicant1.Image = fetchFile(bucket, applicant1.Image)
+	applicant1.CoverLetter = fetchFile(bucket, applicant1.CoverLetter)
+	applicant1.Resume = fetchFile(bucket, applicant1.Resume)
+
+	applicant2.Image = fetchFile(bucket, applicant2.Image)
+	applicant2.CoverLetter = fetchFile(bucket, applicant2.CoverLetter)
+	applicant2.Resume = fetchFile(bucket, applicant2.Resume)
+
+
 	applicant1.MatchesPlayed = append(applicant1.MatchesPlayed, applicant2.ID)
 	applicant2.MatchesPlayed = append(applicant2.MatchesPlayed, applicant1.ID)
 
@@ -179,17 +196,30 @@ func (ac *ApplicantController) GetTwoForComparison(w http.ResponseWriter, r *htt
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode([]models.Applicant{applicant1, applicant2})
-
 }
 
 func (ac *ApplicantController) UpdateElo(w http.ResponseWriter, r *http.Request) {
-	var result struct {
-		WinnerID primitive.ObjectID `json:"winner_id"`
-		LoserID primitive.ObjectID `json:"loser_id"`
+	var request struct {
+		WinnerID string `json:"winnerId"`
+		LoserID  string `json:"loserId"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&result); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		log.Printf("Error decoding JSON: %v", err)
+		http.Error(w, fmt.Sprintf("Invalid request payload: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Convert string IDs to ObjectIDs
+	winnerID, err := primitive.ObjectIDFromHex(request.WinnerID)
+	if err != nil {
+		http.Error(w, "Invalid Winner ID format", http.StatusBadRequest)
+		return
+	}
+
+	loserID, err := primitive.ObjectIDFromHex(request.LoserID)
+	if err != nil {
+		http.Error(w, "Invalid Loser ID format", http.StatusBadRequest)
 		return
 	}
 
@@ -197,11 +227,11 @@ func (ac *ApplicantController) UpdateElo(w http.ResponseWriter, r *http.Request)
 	defer cancel()
 
 	var winner, loser models.Applicant
-	if err := ac.collection.FindOne(ctx, bson.M{"_id": result.WinnerID}).Decode(&winner); err != nil {
+	if err := ac.collection.FindOne(ctx, bson.M{"_id": winnerID}).Decode(&winner); err != nil {
 		http.Error(w, "Winner not found", http.StatusNotFound)
 		return
 	}
-	if err := ac.collection.FindOne(ctx, bson.M{"_id": result.LoserID}).Decode(&loser); err != nil {
+	if err := ac.collection.FindOne(ctx, bson.M{"_id": loserID}).Decode(&loser); err != nil {
 		http.Error(w, "Loser not found", http.StatusNotFound)
 		return
 	}
@@ -217,68 +247,17 @@ func (ac *ApplicantController) UpdateElo(w http.ResponseWriter, r *http.Request)
 	updateWinner := bson.M{"$set": bson.M{"elo": winner.Elo}, "$inc": bson.M{"wins": 1}}
 	updateLoser := bson.M{"$set": bson.M{"elo": loser.Elo}, "$inc": bson.M{"losses": 1}}
 	
-	if _, err := ac.collection.UpdateOne(ctx, bson.M{"_id": winner.ID}, updateWinner); err != nil {
+	if _, err := ac.collection.UpdateOne(ctx, bson.M{"_id": winnerID}, updateWinner); err != nil {
 		http.Error(w, "Failed to update winner", http.StatusInternalServerError)
 		return
 	}
-	if _, err := ac.collection.UpdateOne(ctx, bson.M{"_id": loser.ID}, updateLoser); err != nil {
+	if _, err := ac.collection.UpdateOne(ctx, bson.M{"_id": loserID}, updateLoser); err != nil {
 		http.Error(w, "Failed to update loser", http.StatusInternalServerError)
 		return
 	}	
 
     w.WriteHeader(http.StatusOK)
 }
-
-func (ac *ApplicantController) GetLeastRatedApplicants(w http.ResponseWriter, r *http.Request) {
-	// Only allow GET method
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Set up the context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	// Sort by ascending ratingCount and limit to two applicants
-	opts := options.Find().
-		SetSort(bson.D{{Key: "ratingCount", Value: 1}}).
-		SetLimit(2)
-
-	// Execute the query
-	cursor, err := ac.collection.Find(ctx, bson.D{}, opts)
-	if err != nil {
-		http.Error(w, "Error finding applicants: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer cursor.Close(ctx)
-
-	// Decode the results
-	var applicants []models.Applicant
-	if err = cursor.All(ctx, &applicants); err != nil {
-		http.Error(w, "Error decoding applicants: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Create GridFS bucket
-	bucket, err := gridfs.NewBucket(db.Client.Database("akpsi-ucsb"))
-	if err != nil {
-		http.Error(w, "Error creating GridFS bucket: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Fetch files for each applicant
-	for i, applicant := range applicants {
-		applicants[i].Image = fetchFile(bucket, applicant.Image)
-		applicants[i].CoverLetter = fetchFile(bucket, applicant.CoverLetter)
-		applicants[i].Resume = fetchFile(bucket, applicant.Resume)
-	}
-
-	// Set content type and return the raw array of applicants
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(applicants)
-}
-
 
 // Helper function for file fetching
 func fetchFile(bucket *gridfs.Bucket, fileInfo *models.FileInfo) *models.FileInfo {

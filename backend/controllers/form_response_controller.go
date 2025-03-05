@@ -48,11 +48,13 @@ func (fc *FormResponseController) HandleFormResponse(w http.ResponseWriter, r *h
 	}
 
 	applicant := models.Applicant{
-		ID:        primitive.NewObjectID(),
-		ProjectID: projectID,
-		Rating:    0,
-		RatingCount: 0,
-		Timestamp: requestData.Timestamp,
+		ID:            primitive.NewObjectID(),
+		ProjectID:     projectID,
+		Elo:          1000,
+		Wins:         0,
+		Losses:       0,
+		MatchesPlayed: []primitive.ObjectID{},
+		Timestamp:    requestData.Timestamp,
 	}
 
 	bucket, err := gridfs.NewBucket(db.Client.Database("akpsi-ucsb"))
