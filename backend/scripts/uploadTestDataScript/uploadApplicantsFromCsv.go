@@ -45,6 +45,9 @@ func UploadApplicants() {
 		return
 	}
 
+	// Add counter for tracking applicants
+	counter := 0
+
 	// Process each row
 	for {
 		record, err := reader.Read()
@@ -56,34 +59,21 @@ func UploadApplicants() {
 			continue
 		}
 
-		// Safely access record fields with bounds checking
-		firstName := ""
-		lastName := ""
-		year := ""
-		major := ""
-
-		if len(record) > 0 {
-			firstName = record[0]
-		}
-		if len(record) > 1 {
-			lastName = record[1]
-		}
-		if len(record) > 2 {
-			year = record[2]
-		}
-		if len(record) > 3 {
-			major = record[3]
+		// Determine projectId based on counter
+		projectId := " 67c66c5eb4db64228e98857e"
+		if counter >= 30 {
+			projectId = "99c66c5eb4db64228e988599"
 		}
 
 		// Create form response
 		formData := models.FormResponses{
-			FormID:     formId,
+			FormID:    projectId,
 			Timestamp: time.Now().Format(time.RFC3339),
 			Responses: []models.Response{
-				{Question: "firstName", Answer: firstName},
-				{Question: "lastName", Answer: lastName},
-				{Question: "year", Answer: year},
-				{Question: "major", Answer: major},
+				{Question: "firstName", Answer: record[0]},
+				{Question: "lastName", Answer: record[1]},
+				{Question: "year", Answer: record[8]},
+				{Question: "major", Answer: record[10]},
 			},
 		}
 
@@ -163,7 +153,8 @@ func UploadApplicants() {
 			continue
 		}
 
-		fmt.Printf("Successfully uploaded application for %s %s\n", firstName, lastName)
+		fmt.Printf("Successfully uploaded application for %s %s (Project: %s)\n", record[0], record[1], projectId)
+		counter++
 	}
 }
 
